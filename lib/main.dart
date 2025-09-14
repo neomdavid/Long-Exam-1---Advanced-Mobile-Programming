@@ -30,7 +30,12 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+      create: (_) {
+        final themeProvider = ThemeProvider();
+        // Initialize theme from SharedPreferences
+        themeProvider.initializeTheme();
+        return themeProvider;
+      },
       child: ScreenUtilInit(
         designSize: const Size(412, 715),
         minTextAdapt: true,
@@ -39,10 +44,10 @@ class MainApp extends StatelessWidget {
           final themeModel = build.watch<ThemeProvider>();
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: ThemeData.light(),
-            darkTheme: ThemeData.dark(),
+            theme: themeModel.lightTheme,
+            darkTheme: themeModel.darkTheme,
             themeMode: themeModel.isDark ? ThemeMode.dark : ThemeMode.light,
-            title: 'Blog App',
+            title: 'iCart',
             initialRoute: '/splash',
             routes: {
               '/splash': (context) => const SplashScreen(),
