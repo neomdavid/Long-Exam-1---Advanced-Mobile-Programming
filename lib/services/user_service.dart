@@ -34,12 +34,60 @@ class UserService {
     }
   }
 
+  Future<Map<String, dynamic>> registerUser({
+    required String firstName,
+    required String lastName,
+    required String age,
+    required String gender,
+    required String contactNumber,
+    required String email,
+    required String username,
+    required String password,
+    required String address,
+    required String type,
+  }) async {
+    final response = await post(
+      Uri.parse('$host/api/users'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'firstName': firstName,
+        'lastName': lastName,
+        'age': age,
+        'gender': gender,
+        'contactNumber': contactNumber,
+        'email': email,
+        'username': username,
+        'password': password,
+        'address': address,
+        'type': type,
+      }),
+    );
+
+    print('Registration response status code: ${response.statusCode}');
+    print('Registration response body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      data = jsonDecode(response.body);
+      return data;
+    } else {
+      throw Exception(
+          'Registration failed: ${response.statusCode} - ${response.body}');
+    }
+  }
+
   /// **Save User Data to SharedPreferences**
   Future<void> saveUserData(Map<String, dynamic> userData) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('firstName', userData['firstName']?.toString() ?? '');
+    await prefs.setString('lastName', userData['lastName']?.toString() ?? '');
+    await prefs.setString('email', userData['email']?.toString() ?? '');
+    await prefs.setString('username', userData['username']?.toString() ?? '');
     await prefs.setString('token', userData['token']?.toString() ?? '');
     await prefs.setString('type', userData['type']?.toString() ?? '');
+    await prefs.setString('userId', userData['_id']?.toString() ?? '');
   }
 
   /// **Retrieve User Data from SharedPreferences**
@@ -47,8 +95,12 @@ class UserService {
     final prefs = await SharedPreferences.getInstance();
     return {
       'firstName': prefs.getString('firstName') ?? '',
+      'lastName': prefs.getString('lastName') ?? '',
+      'email': prefs.getString('email') ?? '',
+      'username': prefs.getString('username') ?? '',
       'token': prefs.getString('token') ?? '',
       'type': prefs.getString('type') ?? '',
+      'userId': prefs.getString('userId') ?? '',
     };
   }
 
