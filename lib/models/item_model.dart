@@ -5,7 +5,7 @@ class Item {
   final String photoUrl;
   final String qtyTotal;
   final String qtyAvailable;
-  final String isActive;
+  final bool isActive;
 
   Item({
     this.iid = '',
@@ -29,7 +29,7 @@ class Item {
       photoUrl: json['photoUrl']?.toString() ?? '',
       qtyTotal: json['qtyTotal']?.toString() ?? '',
       qtyAvailable: json['qtyAvailable']?.toString() ?? '',
-      isActive: json['isActive']?.toString() ?? '',
+      isActive: json['isActive'] == true || json['isActive'] == 'true',
     );
   }
 }

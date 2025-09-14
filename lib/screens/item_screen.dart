@@ -25,14 +25,25 @@ class _ItemScreenState extends State<ItemScreen> {
   }
 
   Future<void> _loadItems() async {
-    final res = await _svc.getAllItem();
-    // Support both items:[...] and [...]
-    final list = (res['items'] ?? res) as dynamic;
-    final List data = list is List ? list : (list['data'] ?? []);
-    setState(() {
-      _items.clear();
-      _items.addAll(data.map((e) => Item.fromJson(e)));
-    });
+    try {
+      final res = await _svc.getAllItem();
+
+      final list = (res['items'] ?? res) as dynamic;
+
+      final List data = list is List ? list : (list['data'] ?? []);
+
+      final allItems = data.map((e) => Item.fromJson(e)).toList();
+      print('All items: $allItems');
+
+      final activeItems = allItems.where((item) {
+        return item.isActive == true;
+      }).toList();
+
+      setState(() {
+        _items.clear();
+        _items.addAll(activeItems);
+      });
+    } catch (e) {}
   }
 
   Future<void> _openAddItemDialog() async {
@@ -228,6 +239,26 @@ class _ItemScreenState extends State<ItemScreen> {
         width: 72.sp,
         height: 72.sp,
         fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 72.sp,
+            height: 72.sp,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
         errorBuilder: (context, error, stackTrace) => Container(
           width: 72.sp,
           height: 72.sp,
@@ -309,8 +340,10 @@ class _ItemScreenState extends State<ItemScreen> {
                           builder: (_) => DetailScreen(item: item)),
                     );
 
-                    // If deleted:
-                    if (result is Map && result['deleted'] == true) {
+                    // If deleted or archived:
+                    if (result is Map &&
+                        (result['deleted'] == true ||
+                            result['archived'] == true)) {
                       final id = result['id'] as String;
                       setState(() {
                         _items.removeWhere((e) => e.iid == id);

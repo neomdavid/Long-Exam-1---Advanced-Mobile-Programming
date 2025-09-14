@@ -36,7 +36,7 @@ class _DetailScreenState extends State<DetailScreen> {
     _photoCtrl = TextEditingController(text: _item.photoUrl);
     _qtyTotalCtrl = TextEditingController(text: _item.qtyTotal);
     _qtyAvailCtrl = TextEditingController(text: _item.qtyAvailable);
-    _isActive = (_item.isActive.toString().toLowerCase() == 'true');
+    _isActive = _item.isActive;
   }
 
   @override
@@ -102,39 +102,102 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _confirmDelete() async {
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Item'),
-        content: const Text('This action cannot be undone. Continue?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (yes != true) return;
-    setState(() => _isSaving = true);
-    try {
-      await _svc.deleteItem(_item.iid, {});
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Item deleted.')),
+    if (_isActive) {
+      // Archive active item
+      final yes = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Archive Item'),
+          content: const Text(
+              'Are you sure you want to archive this item? It will be moved to the archive and can be deleted from there.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(backgroundColor: Colors.orange),
+              child: const Text('Archive'),
+            ),
+          ],
+        ),
       );
-      Navigator.of(context).pop({'deleted': true, 'id': _item.iid});
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete: $e')),
+      if (yes != true) return;
+      setState(() => _isSaving = true);
+      try {
+        // Update item to inactive
+        await _svc.updateItem(_item.iid, {
+          'name': _item.name,
+          'description': _item.description,
+          'photoUrl': _item.photoUrl,
+          'qtyTotal': _item.qtyTotal,
+          'qtyAvailable': _item.qtyAvailable,
+          'isActive': false,
+        });
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Item archived successfully.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop({'archived': true, 'id': _item.iid});
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to archive: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } finally {
+        if (mounted) setState(() => _isSaving = false);
+      }
+    } else {
+      // Delete inactive item permanently
+      final yes = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Delete Item'),
+          content: const Text(
+              'Are you sure you want to permanently delete this archived item?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
       );
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (yes != true) return;
+      setState(() => _isSaving = true);
+      try {
+        await _svc.deleteItem(_item.iid);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Item deleted permanently.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop({'deleted': true, 'id': _item.iid});
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } finally {
+        if (mounted) setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -159,6 +222,31 @@ class _DetailScreenState extends State<DetailScreen> {
         height: 160.h,
         width: double.infinity,
         fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            height: 160.h,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                          loadingProgress.expectedTotalBytes!
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                const Text('Loading image...'),
+              ],
+            ),
+          );
+        },
         errorBuilder: (context, error, stackTrace) => Container(
           height: 160.h,
           decoration: BoxDecoration(
@@ -167,7 +255,14 @@ class _DetailScreenState extends State<DetailScreen> {
             border: Border.all(color: Colors.grey.shade300),
           ),
           alignment: Alignment.center,
-          child: const Icon(Icons.broken_image_outlined, size: 48),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.broken_image_outlined, size: 48),
+              SizedBox(height: 8),
+              Text('Failed to load image'),
+            ],
+          ),
         ),
       ),
     );
@@ -285,8 +380,16 @@ class _DetailScreenState extends State<DetailScreen> {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: _isSaving ? null : _confirmDelete,
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Delete Item'),
+                    icon:
+                        Icon(_isActive ? Icons.archive : Icons.delete_outline),
+                    label:
+                        Text(_isActive ? 'Archive Item' : 'Delete Permanently'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _isActive ? Colors.orange : Colors.red,
+                      side: BorderSide(
+                        color: _isActive ? Colors.orange : Colors.red,
+                      ),
+                    ),
                   ),
                 ),
               ],

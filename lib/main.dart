@@ -10,6 +10,7 @@ import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/archive_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,6 +59,7 @@ class MainApp extends StatelessWidget {
               '/home': (context) => const HomeScreen(),
               '/settings': (context) => const SettingsScreen(),
               '/profile': (context) => const ProfileScreen(),
+              '/archive': (context) => const ArchiveScreen(),
             },
           );
         },

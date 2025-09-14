@@ -51,21 +51,20 @@ class ItemService {
     }
   }
 
-  Future<Map> deleteItem(String id, dynamic article) async {
+  Future<Map> deleteItem(String id) async {
     final response = await delete(
       Uri.parse('$host/api/items/$id'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: jsonEncode(article),
     );
-    if (response.statusCode == 200 || response.statusCode == 201) {
+    if (response.statusCode == 200 || response.statusCode == 204) {
       mapData = jsonDecode(response.body);
       return mapData;
     } else {
       throw Exception(
-          'Failed to update article: ${response.statusCode} ${response.body}');
+          'Failed to delete item: ${response.statusCode} ${response.body}');
     }
   }
 }
