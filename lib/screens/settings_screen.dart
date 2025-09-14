@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../widgets/custom_text.dart';
 import '../providers/theme_provider.dart';
 import '../services/user_service.dart';
+import '../widgets/theme_icons.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -15,19 +15,19 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(
         title: CustomText(
           'Settings',
-          fontSize: 20.sp,
+          fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
       ),
       body: ListView(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         children: [
           // Section title
           Padding(
-            padding: EdgeInsets.only(bottom: 12.h, top: 8.h),
+            padding: const EdgeInsets.only(bottom: 12, top: 8),
             child: CustomText(
               'Appearance',
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -35,36 +35,38 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => themeModel.toggleTheme(),
             child: Card(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: ListTile(
                 contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 4.h,
+                  horizontal: 16,
+                  vertical: 4,
                 ),
                 title: CustomText(
                   'Dark Mode',
-                  fontSize: 14.sp,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
                 trailing: IconButton(
                   onPressed: () => themeModel.toggleTheme(),
-                  icon: Icon(
-                    themeModel.isDark ? Icons.dark_mode : Icons.light_mode,
-                    size: 24.sp,
+                  icon: ThemedIcon(
+                    themeModel.isDark
+                        ? ThemeIcons.darkMode
+                        : ThemeIcons.lightMode,
+                    size: 24,
                   ),
                 ),
               ),
             ),
           ),
-          SizedBox(height: 20.h),
+          const SizedBox(height: 20),
 
           // Account section
           Padding(
-            padding: EdgeInsets.only(bottom: 12.h, top: 8.h),
+            padding: const EdgeInsets.only(bottom: 12, top: 8),
             child: CustomText(
               'Account',
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -72,33 +74,35 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => _showLogoutDialog(context),
             child: Card(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: ListTile(
                 contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 4.h,
+                  horizontal: 16,
+                  vertical: 4,
                 ),
-                leading: Icon(
-                  Icons.logout,
+                leading: ThemedIcon(
+                  ThemeIcons.logout,
                   color: Colors.red,
-                  size: 24.sp,
+                  size: 24,
+                  useThemeColor: false,
                 ),
                 title: CustomText(
                   'Logout',
-                  fontSize: 14.sp,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.red,
                 ),
-                trailing: Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16.sp,
+                trailing: ThemedIcon(
+                  ThemeIcons.forward,
+                  size: 16,
                   color: Colors.grey,
+                  useThemeColor: false,
                 ),
               ),
             ),
           ),
-          SizedBox(height: 20.h),
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -111,19 +115,19 @@ class SettingsScreen extends StatelessWidget {
         return AlertDialog(
           title: CustomText(
             'Logout',
-            fontSize: 18.sp,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
           content: CustomText(
             'Are you sure you want to logout?',
-            fontSize: 14.sp,
+            fontSize: 14,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: CustomText(
                 'Cancel',
-                fontSize: 14.sp,
+                fontSize: 14,
                 color: Colors.grey,
               ),
             ),
@@ -141,7 +145,7 @@ class SettingsScreen extends StatelessWidget {
               },
               child: CustomText(
                 'Logout',
-                fontSize: 14.sp,
+                fontSize: 14,
                 color: Colors.red,
                 fontWeight: FontWeight.bold,
               ),

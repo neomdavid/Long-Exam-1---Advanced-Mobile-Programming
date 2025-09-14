@@ -39,8 +39,8 @@ class MainApp extends StatelessWidget {
           final themeModel = build.watch<ThemeProvider>();
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: ThemeData.light(),
-            darkTheme: ThemeData.dark(),
+            theme: themeModel.lightTheme,
+            darkTheme: themeModel.darkTheme,
             themeMode: themeModel.isDark ? ThemeMode.dark : ThemeMode.light,
             title: 'Blog App',
             initialRoute: '/splash',
