@@ -88,6 +88,12 @@ class UserService {
     await prefs.setString('token', userData['token']?.toString() ?? '');
     await prefs.setString('type', userData['type']?.toString() ?? '');
     await prefs.setString('userId', userData['_id']?.toString() ?? '');
+    await prefs.setString('age', userData['age']?.toString() ?? '');
+    await prefs.setString('gender', userData['gender']?.toString() ?? '');
+    await prefs.setString(
+        'contactNumber', userData['contactNumber']?.toString() ?? '');
+    await prefs.setString('address', userData['address']?.toString() ?? '');
+    await prefs.setBool('isActive', userData['isActive'] == true);
   }
 
   /// **Retrieve User Data from SharedPreferences**
@@ -101,6 +107,11 @@ class UserService {
       'token': prefs.getString('token') ?? '',
       'type': prefs.getString('type') ?? '',
       'userId': prefs.getString('userId') ?? '',
+      'age': prefs.getString('age') ?? '',
+      'gender': prefs.getString('gender') ?? '',
+      'contactNumber': prefs.getString('contactNumber') ?? '',
+      'address': prefs.getString('address') ?? '',
+      'isActive': prefs.getBool('isActive') ?? false,
     };
   }
 
@@ -108,6 +119,59 @@ class UserService {
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token') != null;
+  }
+
+  /// **Fetch User Profile from API using userId**
+  Future<Map<String, dynamic>> getUserProfile(String userId) async {
+    print('Fetching user profile for ID: $userId');
+    print('API URL: $host/api/users/$userId');
+
+    final response = await get(
+      Uri.parse('$host/api/users/$userId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+
+    print('User profile response status code: ${response.statusCode}');
+    print('User profile response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data;
+    } else {
+      throw Exception(
+          'Failed to fetch user profile: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  /// **Fetch Current User Profile using token**
+  Future<Map<String, dynamic>> getCurrentUserProfile() async {
+    // Use the specific user ID you provided
+    const String userId = '68c527ec927b447b398fc8e4';
+
+    print('Fetching user profile for ID: $userId');
+    print('API URL: $host/api/users/$userId');
+
+    final response = await get(
+      Uri.parse('$host/api/users/$userId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+
+    print('User profile response status code: ${response.statusCode}');
+    print('User profile response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data;
+    } else {
+      throw Exception(
+          'Failed to fetch user profile: ${response.statusCode} - ${response.body}');
+    }
   }
 
   /// **Logout and Clear User Data**

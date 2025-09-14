@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'item_screen.dart';
+import 'profile_screen.dart';
 import '../widgets/custom_text.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -29,9 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? 'Items'
                 : _selectedIndex == 1
                     ? 'Archive'
-                    : _selectedIndex == 2
-                        ? 'Profile'
-                        : 'Home',
+                    : 'Home',
             fontSize: 20.sp,
             fontWeight: FontWeight.w600,
           ),
@@ -49,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: const <Widget>[
             ItemScreen(),
             Placeholder(),
-            Placeholder(),
+            ProfileScreen(),
           ],
           onPageChanged: (page) {
             setState(() {
