@@ -22,32 +22,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadUserData() async {
     try {
-      final cachedData = await _userService.getUserData();
-
-      try {
-        final apiData = await _userService.getCurrentUserProfile();
-
-        if (apiData['user'] != null) {
-          setState(() {
-            _userData = apiData['user'];
-            _isLoading = false;
-          });
-          return;
-        } else if (apiData['_id'] != null) {
-          setState(() {
-            _userData = apiData;
-            _isLoading = false;
-          });
-          return;
-        }
-      } catch (e) {}
-
+      final apiData = await _userService.getCurrentUserProfile();
+      final Map<String, dynamic> normalized =
+          (apiData['user'] is Map<String, dynamic>) ? apiData['user'] : apiData;
       setState(() {
-        _userData = cachedData;
+        _userData = normalized;
         _isLoading = false;
       });
-      print('=== USING CACHED DATA ===');
-      print('Final user data: $_userData');
     } catch (e) {
       setState(() {
         _error = e.toString();

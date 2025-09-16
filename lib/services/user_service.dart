@@ -81,19 +81,36 @@ class UserService {
   /// **Save User Data to SharedPreferences**
   Future<void> saveUserData(Map<String, dynamic> userData) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('firstName', userData['firstName']?.toString() ?? '');
-    await prefs.setString('lastName', userData['lastName']?.toString() ?? '');
-    await prefs.setString('email', userData['email']?.toString() ?? '');
-    await prefs.setString('username', userData['username']?.toString() ?? '');
+    // Some API responses (e.g., login) return `{ token, user: { ... } }`
+    // while others (e.g., register/get user) return the user object directly.
+    final Map<String, dynamic> user = (userData['user'] is Map<String, dynamic>)
+        ? userData['user']
+        : userData;
+
+    // Persist token if present at the top level
     await prefs.setString('token', userData['token']?.toString() ?? '');
-    await prefs.setString('type', userData['type']?.toString() ?? '');
-    await prefs.setString('userId', userData['_id']?.toString() ?? '');
-    await prefs.setString('age', userData['age']?.toString() ?? '');
-    await prefs.setString('gender', userData['gender']?.toString() ?? '');
+
+    await prefs.setString('firstName', user['firstName']?.toString() ?? '');
+    await prefs.setString('lastName', user['lastName']?.toString() ?? '');
+    await prefs.setString('email', user['email']?.toString() ?? '');
+    await prefs.setString('username', user['username']?.toString() ?? '');
+    await prefs.setString('type', user['type']?.toString() ?? '');
+    // Resolve userId from both top-level payload and nested user object
+    final dynamic resolvedUserId = userData['userId'] ??
+        userData['uid'] ??
+        userData['_id'] ??
+        userData['id'] ??
+        user['_id'] ??
+        user['id'] ??
+        user['userId'] ??
+        user['uid'];
+    await prefs.setString('userId', resolvedUserId?.toString() ?? '');
+    await prefs.setString('age', user['age']?.toString() ?? '');
+    await prefs.setString('gender', user['gender']?.toString() ?? '');
     await prefs.setString(
-        'contactNumber', userData['contactNumber']?.toString() ?? '');
-    await prefs.setString('address', userData['address']?.toString() ?? '');
-    await prefs.setBool('isActive', userData['isActive'] == true);
+        'contactNumber', user['contactNumber']?.toString() ?? '');
+    await prefs.setString('address', user['address']?.toString() ?? '');
+    await prefs.setBool('isActive', user['isActive'] == true);
   }
 
   /// **Retrieve User Data from SharedPreferences**
@@ -126,11 +143,15 @@ class UserService {
     print('Fetching user profile for ID: $userId');
     print('API URL: $host/api/users/$userId');
 
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+
     final response = await get(
       Uri.parse('$host/api/users/$userId'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
       },
     );
 
@@ -148,17 +169,24 @@ class UserService {
 
   /// **Fetch Current User Profile using token**
   Future<Map<String, dynamic>> getCurrentUserProfile() async {
-    // Use the specific user ID you provided
-    const String userId = '68c527ec927b447b398fc8e4';
+    final prefs = await SharedPreferences.getInstance();
+    final String? savedUserId = prefs.getString('userId');
+    final String? token = prefs.getString('token');
 
-    print('Fetching user profile for ID: $userId');
-    print('API URL: $host/api/users/$userId');
+    if (savedUserId == null || savedUserId.isEmpty) {
+      // No saved userId; cannot fetch profile
+      throw Exception('No saved userId found');
+    }
+
+    print('Fetching user profile for ID: $savedUserId');
+    print('API URL: $host/api/users/$savedUserId');
 
     final response = await get(
-      Uri.parse('$host/api/users/$userId'),
+      Uri.parse('$host/api/users/$savedUserId'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
       },
     );
 

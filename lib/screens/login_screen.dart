@@ -37,7 +37,10 @@ class _LoginScreenState extends State<LoginScreen> {
           _emailController.text,
           _passwordController.text,
         );
+        // Persist token and any immediate user info
         await _userService.saveUserData(response);
+
+        // Do not fetch and cache profile here anymore; Profile screen will always fetch fresh
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login successful!')),
